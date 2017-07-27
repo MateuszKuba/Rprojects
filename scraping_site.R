@@ -21,10 +21,7 @@
     return(pg)
   }
   
-  dfCols_toDouble <- function(df){
-    for(i in ncol(df))df[,i] < as.double(df[,i])
-    return(df)
-  }
+  
   
   scrape <- function(type,expire){
     
@@ -37,16 +34,21 @@
     eurex_df <- as.data.frame(eurex)
     colnames(eurex_df) = eurex[1,]
     eurex_df = eurex_df[-1,]
-    eurex_df = eurex_df[,c(1,6:9,17)]  # pozostaw interesujace kolumny
+    eurex_df = eurex_df[,c(1,6:9,16)]  # pozostaw interesujace kolumny
+    names(eurex_df)[6] <- "open_interest" 
+    eurex_df$open_interest <- as.integer(sub(",","",(eurex_df$open_interest)))
     
-    eurex_df <- dfCols_toDouble(eurex_df)
+    eurex_df$'Strike price' = as.numeric(sub(",","",sub("\\..*","",eurex_df$`Strike price`)))
+    names(eurex_df) <- gsub(" ","_",names(eurex_df))
+    
+    eurex_df$Ask_price <- as.numeric(eurex_df$Ask_price)
+    eurex_df$Ask_price[is.na(eurex_df$Ask_price)] <- 0
     
     return(eurex_df)
   }
   
   
-  x <- -100:100
-  y <- -100:100
+ 
   
   createOption <- function( buyingPrice, type, strike, direction ){
     return(list(buyingPrice=buyingPrice, type=type, strike=strike, direction=direction))
@@ -83,5 +85,49 @@
     plot(from:to,totalProfit)
   }
   
- 
+  getExpDatesEurex <- function(){
+    month <- as.numeric(format(Sys.Date(), "%m"))
+    year <- as.numeric(format(Sys.Date(), "%Y"))
+    
+    expMonths <- month:(month+6)
+    expDates <- vector()
+    for (i in expMonths){
+      month = i
+      if(i>12){
+        month= i-12
+        year = year + 1
+      }
+      if(month<10)month<-paste0("0",as.character(month))
+        expDates <- c(expDates,paste0(as.character(year),as.character(month)))
+    }
+    return(expDates)
+  }
+  
+   expiration = 201812
+  eurex_df_call = scrape("Call",expiration)
+  eurex_df_put = scrape("Put",expiration)
+  
+  scrapeFromYahoo <- function(date){
+    
+    require(TTR)
+    symbols <- stockSymbols()
+    
+    require(anytime)
+    as.numeric(as.POSIXct("2013-09-16 2:13:46 EST"))
+    
+    
+    require(jsonlite)
+    company_name <- paste0("https://query2.finance.yahoo.com/v7/finance/options/"+symbol)
+    aapl_expDates <- fromJSON(company_name)
+    aapl_expDates <- aapl_expDate$optionChain$result$expirationDates
+    require(rjson)
+    require(RCurl)
+    raw_data <- getURL("https://query2.finance.yahoo.com/v7/finance/options/aapl?date=1501200000")
+    options_data <- fromJSON(raw_data)
+    options_data$optionChain$result[[1]]$options[[1]]$calls
+    options_data$optionChain$result[[1]]$options[[1]]$puts
+    
+    
+    
+  }
   
