@@ -103,7 +103,8 @@
     return(expDates)
   }
   
-   expiration = 201812
+  expDates <- getExpDatesEurex()   
+  expiration = 201812
   eurex_df_call = scrape("Call",expiration)
   eurex_df_put = scrape("Put",expiration)
   
