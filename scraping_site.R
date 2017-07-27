@@ -2,26 +2,6 @@
   
   require(rvest)
   
-  scrapeJSSite <- function(type,expire){
-    
-    url <- paste0("http://www.eurexchange.com/exchange-en/products/idx/stx/blc/19068!quotesSingleViewOption?callPut=",
-                  type,"&maturityDate=",expire)
-    
-    lines <- readLines("scrape_final.js")
-    lines[1] <- paste0("var url ='",url,"';")
-    writeLines(lines,"scrape_final.js")   ## zapis do pliku scrape_final.js do pierwszej linijki by
-                                          ##skrypt js wiedzial co robic
-    
-    system("phantomjs scrape_final.js")
-    
-    pg <- read_html("1.html")
-    
-    table <- pg %>% html_node("tableWrapper")
-    
-    return(pg)
-  }
-  
-  
   
   scrape <- function(type,expire){
     
@@ -48,65 +28,38 @@
   }
   
   
+  addExpDateToVector <- function(data,year,month){
+    if(month<10)temp<-paste0("0",as.character(month))
+    else temp = month
+    if(!(paste0(as.character(year),as.character(temp)) %in% data))
+      data <- c(data,paste0(as.character(year),as.character(temp)))
+    return(data)
+  }
+  
  
-  
-  createOption <- function( buyingPrice, type, strike, direction ){
-    return(list(buyingPrice=buyingPrice, type=type, strike=strike, direction=direction))
-  }
-  
-  
-  calculateProfit <- function(opcja,expPrice) {
-    if(opcja$direction=="long"){
-      if(opcja$type=="call"){
-        return(max(expPrice - opcja$strike - opcja$buyingPrice,-opcja$buyingPrice))
-      }
-      else{ # put
-        return(max(opcja$strike - expPrice - opcja$buyingPrice,-opcja$buyingPrice))
-      }
-    }
-    else { #short
-      if(opcja$type=="call"){
-        return(min(opcja$strike - expPrice + opcja$buyingPrice,opcja$buyingPrice))
-      }
-      else {   #put
-        return(min(expPrice - opcja$strike + opcja$buyingPrice,opcja$buyingPrice))
-      }
-    }
-  }
-  
-  
-  plotOption <- function(opcja,from = 2000,to = 4000,step = 1){
-    totalProfit <- vector()
-    a <- seq(from = from,to = to, by = step)
-    for ( i in a){
-      profit <- calculateProfit(opcja,i)
-      totalProfit <- c(totalProfit,profit)
-    }
-    plot(from:to,totalProfit)
-  }
   
   getExpDatesEurex <- function(){
     month <- as.numeric(format(Sys.Date(), "%m"))
     year <- as.numeric(format(Sys.Date(), "%Y"))
     
-    expMonths <- month:(month+6)
+    expMonths <- (month+1):(month+6)
     expDates <- vector()
+    for (i in seq(from = 3, to = 6, by = 3)){
+      expDates <- addExpDateToVector(expDates,year+1,i)
+    }
     for (i in expMonths){
       month = i
       if(i>12){
         month= i-12
         year = year + 1
       }
-      if(month<10)month<-paste0("0",as.character(month))
-        expDates <- c(expDates,paste0(as.character(year),as.character(month)))
+      expDates <- addExpDateToVector(expDates,year,month)
     }
+    
     return(expDates)
   }
   
-  expDates <- getExpDatesEurex()   
-  expiration = 201812
-  eurex_df_call = scrape("Call",expiration)
-  eurex_df_put = scrape("Put",expiration)
+
   
   scrapeFromYahoo <- function(date){
     
