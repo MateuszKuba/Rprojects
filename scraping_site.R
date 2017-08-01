@@ -42,7 +42,7 @@
     month <- as.numeric(format(Sys.Date(), "%m"))
     year <- as.numeric(format(Sys.Date(), "%Y"))
     
-    expMonths <- (month+1):(month+6)
+    expMonths <- (month):(month+5)
     expDates <- vector()
     for (i in seq(from = 3, to = 6, by = 3)){
       expDates <- addExpDateToVector(expDates,year+1,i)
