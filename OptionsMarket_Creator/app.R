@@ -15,7 +15,7 @@ library(ggplot2)
 library(pastecs)
 
 # Define UI for application that draws a histogram
-ui <- fluidPage(style = "border: 30px solid white",
+ui <- fluidPage(style = "border: 30px solid",
    
    # Application title
    titlePanel("Structured Product Creator: "),
