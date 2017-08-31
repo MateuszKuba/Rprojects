@@ -23,14 +23,85 @@ calculateProfit <- function(opcja,expPrice) {
 }
 
 
-plotOption <- function(opcja,from = 2000,to = 4000,step = 1){
+calculateProfitArray <- function(opcja,from,to,step){
   totalProfit <- vector()
   a <- seq(from = from,to = to, by = step)
   for ( i in a){
     profit <- calculateProfit(opcja,i)
     totalProfit <- c(totalProfit,profit)
   }
+  return(totalProfit)
+}
+
+calculateProfitArrayForManyOptions <- function(listaOpcji,from,to,step){
+  totalProfit <- 0
+  for ( i in listaOpcji ){
+    if(typeof(i)=="list"){totalProfit <- totalProfit + calculateProfitArray(i,from,to,step)}
+    else {return(calculateProfitArray(listaOpcji,from,to,step))}
+  }
+  return(totalProfit)
+}
+
+calculateProfitVolumeForManyOptions <- function(listaOpcji,from = 2000,to = 4000,step = 1){
+  
+  totalProfit <- calculateProfitArrayForManyOptions(listaOpcji,from,to,step)
+  sum(totalProfit)
+  
+}
+
+optionsStrategy <- function(expirations){
+  
+  profvis({
+  expirations = expDates
+  type <- c("call","put")
+  dir <- c("long","short")
+  strike <- seq(2000,4000,50)
+  max = -10000000
+  maxOp = 0
+  expir = 0
+  for ( i in strike){
+    for ( j in dir){
+      for ( k in expirations){
+        for( l in type){
+          price = 0
+          if(l=="call")price = as.numeric(get(k,eurex_stoxx50_call) %>% 
+                                                     filter(Strike_price==i) %>% 
+                                                     select(Ask_price))
+          if(l=="put")price = as.numeric(get(k,eurex_stoxx50_put) %>%
+                                                    filter(Strike_price==i) %>% 
+                                                    select(Ask_price))
+          
+          
+          if(!is.na(price)){
+              if ( price !=0 ){
+                  a <- createOption(price,l,i,j)
+                      profitA <- calculateProfitVolumeForManyOptions(a,2000,4000,1)
+                      if(profitA>max){
+                        max = profitA
+                        maxOp = a
+                        expir = k
+                      }
+                      cat(paste("."," "))
+              }
+          }
+        }
+      }
+    }
+  }
+  })
+  return(c(maxOp,k))
+  
+}
+
+
+plotOption <- function(opcja,from = 2000,to = 4000,step = 1){
+  totalProfit <- calculateProfitArrayForManyOptions(opcja,from,to,step)
   plot(from:to,totalProfit)
 }
 
+library(profvis)
+profvis({
+a <- optionsStrategy(expDates)
+print(a)
+})
 

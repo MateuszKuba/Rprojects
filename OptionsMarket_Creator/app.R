@@ -75,6 +75,8 @@ server <- function(input, output) {
 
       a <- createOption(price,type = input$type, strike = input$strike,direction = input$dir )
       
+      #print(calculateProfitVolumeForManyOptions(a))
+      
       plotOption(a)
    })
    output$plot2 <- renderPlot({
