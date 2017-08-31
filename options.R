@@ -105,13 +105,15 @@ optionsStrategy2 <- function(expirations){
   maxOp = 0
   expir = 0
   
+  a <- list()
   
   for ( i in expirations){
     
     for ( j in 1:10){
       
       listaOpcji <- list()
-      for ( k in 1:2){
+      k <- 2
+      while( k > 0 ){
         
         type_temp <-sample(type,1)
         dir_temp <- sample(dir,1)
@@ -124,23 +126,24 @@ optionsStrategy2 <- function(expirations){
                                          filter(Strike_price==strike_temp) %>% 
                                          select(Ask_price))
         
-        
-        a <- createOption(price,type_temp,strike_temp,dir_temp)
-        
         if(!is.na(price)){
           if ( price !=0 ){
-            profitA <- calculateProfitVolumeForManyOptions(a,2000,4000,1)
-            if(profitA>max){
-              max = profitA
-              maxOp = a
-              expir = i
-            }
-            cat(paste("."," "))
+        a[k] <- list(createOption(price,type_temp,strike_temp,dir_temp))
           }
         }
+      } ## k in 1:2
+      
+      if(!is.na(price)){
+        if ( price !=0 ){
+          profitA <- calculateProfitVolumeForManyOptions(a,2000,4000,1)
+          if(profitA>max){
+            max = profitA
+            maxOp = a
+            expir = i
+          }
+          cat(paste("."," "))
+        }
       }
-      
-      
     }
     
   }
