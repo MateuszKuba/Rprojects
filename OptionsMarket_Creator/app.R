@@ -93,7 +93,7 @@ server <- function(input, output) {
    })
    output$plot3 <- renderPlot({
      eurex_stoxx50_put_temp <- get(input$expDate,eurex_stoxx50_put) %>% filter(open_interest > 5000)
-     barplot(names.arg = eurex_stoxx50_put_temp$Strike_price,eurex_stoxx50_put_temp$open_interest,main="Pall Option Open Interest vs Strike")
+     barplot(names.arg = eurex_stoxx50_put_temp$Strike_price,eurex_stoxx50_put_temp$open_interest,main="Put Option Open Interest vs Strike")
      
      output$putTable <- DT::renderDataTable(DT::datatable({
        as.data.frame(eurex_stoxx50_put_temp)

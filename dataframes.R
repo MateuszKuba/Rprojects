@@ -4,7 +4,7 @@ expDates <- getExpDatesEurex()
 
 eurex_stoxx50_call <- list()
 eurex_stoxx50_put <- list()
-expDates <- expDates[expDates!="201708"]
+expDates <- expDates[expDates!="201902"]
 
     
     for ( i in expDates ){
