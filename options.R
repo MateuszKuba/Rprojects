@@ -128,6 +128,8 @@ optionsStrategy2 <- function(expirations,from,to,step=50,liczbaOpcji = 3,iterati
       
       a <-createOptionsSample("201806",1,5,TRUE)
       profitArray <- calculateProfitArrayForManyOptions(a,from,to,1)
+      ## standaryzacja zmiennych
+      #profitArray <- scale(profitArray)
       profitA <- calculateProfitVolumeForManyOptions(profitArray)
           
       if(profitA>max & strategyConditions(profitArray)==TRUE){
@@ -135,6 +137,7 @@ optionsStrategy2 <- function(expirations,from,to,step=50,liczbaOpcji = 3,iterati
         maxOp = a
         expir = i
       }
+      print(maxOp)
       cat(paste("."," "))
     }
   }
@@ -154,6 +157,7 @@ strategyConditions <- function(profitArray) {
   minimum = min(profitArray)
   print(minimum)
   if(min<-1000)return(FALSE)
+  else return(TRUE)
 }
 
 createOptionsSample <- function(expiration, k , liczbaOpcji, czyOpcjePowtarzajaSie = TRUE){
@@ -197,8 +201,8 @@ plotOption <- function(opcja,from = 2000,to = 4000,step = 1){
   plot(from:to,totalProfit)
 }
 
-from = 1
-to = 10000
+from = 3100
+to = 3800
 
 a <- optionsStrategy2("201806",from,to,step = 10,liczbaOpcji = 4,iterations = 50)
 print(a)
