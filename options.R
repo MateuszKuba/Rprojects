@@ -48,10 +48,9 @@ calculateProfitArrayForManyOptions <- function(listaOpcji,from,to,step){
 
 ## uzywa funkcji calculateProfitArrayForManyOptions, roznica jest dodatkowo taka ze sumuje wartosci pojedynczych opcji w calosc
 
-calculateProfitVolumeForManyOptions <- function(listaOpcji,from = 2000,to = 4000,step = 1){
+calculateProfitVolumeForManyOptions <- function(profitArray){
   
-  totalProfit <- calculateProfitArrayForManyOptions(listaOpcji,from,to,step)
-  sum(totalProfit)
+  sum(profitArray)
   
 }
 
@@ -64,7 +63,7 @@ calculateProfitVolumeForManyOptions <- function(listaOpcji,from = 2000,to = 4000
 optionsStrategy <- function(expirations){
   
 
-  expirations = expDates
+  #expirations = expDates
   type <- c("call","put")
   dir <- c("long","short")
   strike <- seq(2000,4000,50)
@@ -110,9 +109,9 @@ optionsStrategy <- function(expirations){
 ## a nastepnie zwroci liste w postaci tych opcji wraz z ich data zapadalnosci, daty zapadalnosci nie sa mieszane
 ## zmiana jest taka, ze parametry: type, dir, strike sa losowane i wybierane jest "iterations" opcji z kazdej zapadalnosci
 
-optionsStrategy2 <- function(expirations,from,to,step=50,liczbaOpcji = 3,iterations=10){
+optionsStrategy2 <- function(expirations,from,to,step=50,liczbaOpcji = 3,iterations=50, czyOpcjePowtarzajaSie = TRUE,ploting = TRUE){
   
-  expirations<- expDates
+  #expirations<- expDates
   type <- c("call","put")
   dir <- c("long","short")
   strike <- seq(from,to,step)
@@ -121,51 +120,75 @@ optionsStrategy2 <- function(expirations,from,to,step=50,liczbaOpcji = 3,iterati
   maxOp = 0
   expir = 0
   
-  a <- list()
+  
   
   for ( i in expirations){
-    
+      print(i)
     for ( j in 1:iterations){
       
-      listaOpcji <- list()
-      k <- 1 ## parametr k narazie ustawiony sztywno na 2
-      while( k < liczbaOpcji + 1 ){
-        
-        type_temp <-sample(type,1)
-        dir_temp <- sample(dir,1)
-        strike_temp <- sample(strike,1)        
-        
-        if(type_temp=="call")price = as.numeric(get(i,eurex_stoxx50_call) %>% 
-                                          filter(Strike_price==strike_temp) %>% 
-                                          select(Ask_price))
-        if(type_temp=="put")price = as.numeric(get(i,eurex_stoxx50_put) %>%
-                                         filter(Strike_price==strike_temp) %>% 
-                                         select(Ask_price))
-        
-        if(!is.na(price)){
-          if ( price !=0 ){
-        a[k] <- list(createOption(price,type_temp,strike_temp,dir_temp))
-        k = k + 1
-          }
-        }
-      } ## k in 1:2
-      
-      if(!is.na(price)){
-        if ( price !=0 ){
-          profitA <- calculateProfitVolumeForManyOptions(a,from,to,1)
-          if(profitA>max){
-            max = profitA
-            maxOp = a
-            expir = i
-          }
-          cat(paste("."," "))
-        }
+      a <-createOptionsSample("201806",1,5,TRUE)
+      profitArray <- calculateProfitArrayForManyOptions(a,from,to,1)
+      profitA <- calculateProfitVolumeForManyOptions(profitArray)
+          
+      if(profitA>max & strategyConditions(profitArray)==TRUE){
+        max = profitA
+        maxOp = a
+        expir = i
       }
+      cat(paste("."," "))
     }
-    
   }
+  
+  if(ploting==TRUE){
+    plottingOptions(a)
+  }
+  
+  print(maxOp)
   return(c(maxOp,list(expir)))
   
+}
+
+
+
+strategyConditions <- function(profitArray) {
+  minimum = min(profitArray)
+  print(minimum)
+  if(min<-1000)return(FALSE)
+}
+
+createOptionsSample <- function(expiration, k , liczbaOpcji, czyOpcjePowtarzajaSie = TRUE){
+  a <- list()
+  i = expiration
+  while( k < liczbaOpcji ){
+    
+    type_temp <-sample(type,1,replace = !czyOpcjePowtarzajaSie) ## nie dziala jeszcze ze wzgledu ze to be znaczenia
+    dir_temp <- sample(dir,1,replace = !czyOpcjePowtarzajaSie)
+    strike_temp <- sample(strike,1,replace = !czyOpcjePowtarzajaSie)        
+    
+    if(type_temp=="call")price = as.numeric(get(i,eurex_stoxx50_call) %>% 
+                                              filter(Strike_price==strike_temp) %>% 
+                                              select(Ask_price))
+    if(type_temp=="put")price = as.numeric(get(i,eurex_stoxx50_put) %>%
+                                             filter(Strike_price==strike_temp) %>% 
+                                             select(Ask_price))
+    
+    if(!is.na(price)){
+      if ( price !=0 ){
+        a[k] <- list(createOption(price,type_temp,strike_temp,dir_temp))
+        k = k + 1
+      }
+    }
+  } 
+  return(a)
+  
+}
+
+plottingOptions <- function(a){
+  par(mfrow=c(2,2))
+  for ( i in 1:(length(a)))
+    plotOption(a[c(i,5)],from,to)
+  par(mfrow =c(1,1))
+  plotOption(a,from,to)
 }
 
 
@@ -174,8 +197,11 @@ plotOption <- function(opcja,from = 2000,to = 4000,step = 1){
   plot(from:to,totalProfit)
 }
 
+from = 1
+to = 10000
 
-a <- optionsStrategy2("201806",1500,4500,liczbaOpcji = 5)
+a <- optionsStrategy2("201806",from,to,step = 10,liczbaOpcji = 4,iterations = 50)
 print(a)
 
-plotOption(a,1500,4500,1)
+
+
